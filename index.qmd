@@ -1,7 +1,7 @@
 ---
 title: "Lab 2: Julia Data Handling"
 subtitle: "DataFrames.jl, Plotting with CairoMakie, TX precipitation datasets, Basic exploratory data analysis"
-author: CEVE 543 Fall 2025
+author: CEVE 543 Fall 2025 - ak276
 date: "2025-09-05"
 type: "lab"
 module: 1
@@ -141,7 +141,7 @@ using Makie.Unitful     # <5>
 # Configure plotting backend - CairoMakie for high-quality static plots
 CairoMakie.activate!(type = "svg")  # <6>
 # If you want interactive plots, uncomment the line below instead:
-# GLMakie.activate!()  # <7>
+GLMakie.activate!()  # <7>
 
 # Configure Unitful display preferences to use inches
 rainfall_conversion = Makie.UnitfulConversion(u"inch")  # <8>
@@ -417,7 +417,19 @@ closest_rainfall = @chain rainfall_data begin
 	@filter(stnid == !!closest_stnid)  # <1>
 end
 closest_rainfall
+
+using Random
+test_station = rand(eachrow(stations))
+test_stnid = test_station.stnid
+random_rainfall = @chain rainfall_data begin
+	@filter(stnid == !!test_stnid)  # <1>
+end
+random_rainfall
 ```
+
+
+
+
 
 1. Filter rainfall data using `!!` to inject the external variable into TidierData
 
@@ -442,7 +454,10 @@ function plot_time_series(station_row, rainfall_df)
 	fig
 end
 
-plot_time_series(closest_station, closest_rainfall)
+#plot_time_series(closest_station, closest_rainfall)
+
+plot_time_series(test_station, random_rainfall)
+
 ```
 
 1. Use string interpolation `$()` to insert station ID and name into the plot title
@@ -483,7 +498,7 @@ function plot_nearby_comparison(stations_df, rainfall_data; n_stations = 4)
 	return fig
 end
 
-plot_nearby_comparison(stations, rainfall_data; n_stations = 4)
+plot_nearby_comparison(stations, rainfall_data; n_stations = 5)
 ```
 
 1. Generate evenly-spaced colors from the viridis palette for each station
@@ -500,9 +515,9 @@ Now we'll work with a GEV distribution to create return period plots and compare
 ```{julia}
 # GEV parameters for Houston area (units: inches)
 # Try modifying these values to better fit your data!
-μ = 4.0    # Location parameter - shifts the distribution left/right
-σ = 1.3    # Scale parameter - controls spread (must be > 0)
-ξ = 0.15   # Shape parameter - controls tail behavior
+μ = 2   # Location parameter - shifts the distribution left/right
+σ = 0.3    # Scale parameter - controls spread (must be > 0)
+ξ = 0  # Shape parameter - controls tail behavior
 
 houston_gev = GeneralizedExtremeValue(μ, σ, ξ)  # <1>
 ```
@@ -606,14 +621,14 @@ plot_empirical_vs_theoretical(closest_rainfall, houston_gev, closest_station)
 Explore the rainfall data to find one station where there *appears* to be a positive trend in rainfall over time and one station where there *appears* to be a negative trend. We will discuss more formal ways for thinking about trends in the coming weeks.
 
 **Station with apparent positive trend:**
+## A station with an apparent positive trend could be station 41-8647, this is with a grain of salt however as there is less data for this station but it looks to be increasing over time
 
-*Write your answer here. Include the station name/ID and explain what you observe in the data that suggests an increasing trend.*
+
 
 
 
 **Station with apparent negative trend:**
-
-*Write your answer here. Include the station name/ID and explain what you observe in the data that suggests a decreasing trend.*
+## A potential negative trend can be spotted with station 41-3060 as it has a ever so slight downturn.
 
 
 
@@ -624,25 +639,26 @@ Explore the rainfall data to find one station where there *appears* to be a posi
 *Record your starting parameters and the final parameters you chose after experimentation:*
 
 - Starting: $\mu = 4.0$, $\sigma = 1.3$, $\xi = 0.15$
-- Final: $\mu = \ldots$ $\sigma = \ldots$, $\xi = \ldots$
+- Final: $\mu = 2.0\ldots$ $\sigma =0.3 \ldots$, $\xi = 0\ldots$
 
 **Parameter Effects:**
 
 **What happened when you increased/decreased $\mu$ (location parameter)?**
 
-*Test values like $\mu = 2.0, 4.0, 6.0$. Describe how the entire GEV curve shifted and how this affected the fit to your red data points.*
+## Increasing and decreasing shifted the plot from left and right. Decreasing it to 2 caused the return period plot to lower its right side significantly  
+
 
 
 
 **What happened when you increased/decreased $\sigma$ (scale parameter)?**
 
-*Test values like $\sigma = 0.8, 1.3, 2.0$. Describe how the curve became steeper/flatter and how this affected the spread of return levels.*
+# decreasing the scale parameter concentrated more values in one area and shortened the return period overall
 
 
 
 **What happened when you changed $\xi$ (shape parameter)?** 
 
-*Test $\xi = -0.1$ (light tail), $\xi = 0.0$ (Gumbel), $\xi = 0.15$, $\xi = 0.3$ (heavy tail). Focus on how the high return period end (right side) of the curve changed.*
+# 0 looked like it brought the right end of the tail lower and failed to account for some extreme data in the return period 
 
 
 
@@ -650,7 +666,7 @@ Explore the rainfall data to find one station where there *appears* to be a posi
 
 **How well does your best-fit GEV distribution represent the closest station's data?**
 
-*Do the red dots follow your blue curve? Where are the biggest deviations?*
+# I would say it does not fit well, it looks to be underestimating the observation consistently and significantly underestimating extremes.
 
 
 
